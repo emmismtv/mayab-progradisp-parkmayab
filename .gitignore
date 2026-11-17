@@ -43,3 +43,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Llave de Google Maps (no se sube al repositorio)
+ios/Flutter/Secrets.xcconfig

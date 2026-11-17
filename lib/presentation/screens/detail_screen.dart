@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:intl/intl.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme.dart';
@@ -74,24 +75,22 @@ class DetailScreen extends StatelessWidget {
             height: 220,
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
-              child: FlutterMap(
-                options: MapOptions(initialCenter: point, initialZoom: 15),
-                children: [
-                  TileLayer(
-                    urlTemplate:
-                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'mx.anahuac.mayab.parkmayab',
+              child: GoogleMap(
+                initialCameraPosition: CameraPosition(target: point, zoom: 16),
+                markers: {
+                  Marker(
+                    markerId: const MarkerId('reserva'),
+                    position: point,
+                    infoWindow: InfoWindow(title: 'Cajón ${r.slotCode}'),
+                    icon: BitmapDescriptor.defaultMarkerWithHue(
+                        BitmapDescriptor.hueOrange),
                   ),
-                  MarkerLayer(markers: [
-                    Marker(
-                      point: point,
-                      width: 44,
-                      height: 44,
-                      child: const Icon(Icons.location_on,
-                          color: AppColors.occupied, size: 40),
-                    ),
-                  ]),
-                ],
+                },
+                // Permite mover el mapa dentro de un ListView.
+                gestureRecognizers: {
+                  Factory<OneSequenceGestureRecognizer>(
+                      () => EagerGestureRecognizer()),
+                },
               ),
             ),
           ),

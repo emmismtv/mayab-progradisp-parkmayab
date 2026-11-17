@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme.dart';
@@ -25,41 +24,30 @@ class HomeScreen extends StatelessWidget {
       body: Column(
         children: [
           Expanded(
-            child: FlutterMap(
-              options: MapOptions(initialCenter: campus, initialZoom: 12.3),
-              children: [
-                TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'mx.anahuac.mayab.parkmayab',
+            child: GoogleMap(
+              initialCameraPosition: CameraPosition(target: campus, zoom: 12.3),
+              myLocationEnabled: user != null,
+              myLocationButtonEnabled: false,
+              circles: {
+                Circle(
+                  circleId: const CircleId('radio'),
+                  center: campus,
+                  radius: c.settings.radiusMeters,
+                  fillColor: AppColors.orange.withValues(alpha: 0.15),
+                  strokeColor: AppColors.orange,
+                  strokeWidth: 2,
                 ),
-                CircleLayer(circles: [
-                  CircleMarker(
-                    point: campus,
-                    radius: c.settings.radiusMeters,
-                    useRadiusInMeter: true,
-                    color: AppColors.orange.withValues(alpha: 0.15),
-                    borderColor: AppColors.orange,
-                    borderStrokeWidth: 2,
-                  ),
-                ]),
-                MarkerLayer(markers: [
-                  Marker(
-                    point: campus,
-                    width: 44,
-                    height: 44,
-                    child: const Icon(Icons.school,
-                        color: AppColors.brown, size: 36),
-                  ),
-                  if (user != null)
-                    Marker(
-                      point: LatLng(user.lat, user.lng),
-                      width: 40,
-                      height: 40,
-                      child: const Icon(Icons.my_location,
-                          color: Colors.blue, size: 30),
-                    ),
-                ]),
-              ],
+              },
+              markers: {
+                Marker(
+                  markerId: const MarkerId('campus'),
+                  position: campus,
+                  infoWindow:
+                      const InfoWindow(title: 'Universidad Anáhuac Mayab'),
+                  icon: BitmapDescriptor.defaultMarkerWithHue(
+                      BitmapDescriptor.hueOrange),
+                ),
+              },
             ),
           ),
           _StatusPanel(controller: c),
