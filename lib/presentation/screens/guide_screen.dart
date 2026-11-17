@@ -29,7 +29,7 @@ class GuideScreen extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(Icons.directions_car_outlined,
-                        size: 64, color: AppColors.brown),
+                        size: 64, color: AppColors.ink),
                     const SizedBox(height: 12),
                     const Text('No tienes una reserva en curso.',
                         style: TextStyle(fontSize: 16)),
@@ -109,29 +109,29 @@ class _GuideBody extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: AppColors.brown,
+            color: AppColors.tan,
             borderRadius: BorderRadius.circular(18),
           ),
           child: Column(children: [
             const Text('TU CAJÓN',
-                style: TextStyle(color: Colors.white70, letterSpacing: 2)),
+                style: TextStyle(color: AppColors.ink, letterSpacing: 2)),
             Text(r.slotCode,
                 style: const TextStyle(
-                    color: AppColors.orange,
+                    color: AppColors.ink,
                     fontSize: 56,
                     fontWeight: FontWeight.bold)),
             Text('Piso ${r.floor} · Ala ${r.wing}',
-                style: const TextStyle(color: Colors.white, fontSize: 18)),
+                style: const TextStyle(color: AppColors.ink, fontSize: 18)),
             const SizedBox(height: 8),
             StatusChip(r.status),
             if (active) ...[
               const SizedBox(height: 8),
               Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                const Icon(Icons.timer_outlined, color: Colors.white70),
+                const Icon(Icons.timer_outlined, color: AppColors.ink),
                 const SizedBox(width: 6),
                 CountdownText(
                     until: r.expiresAt,
-                    style: const TextStyle(color: Colors.white, fontSize: 18)),
+                    style: const TextStyle(color: AppColors.ink, fontSize: 18)),
               ]),
             ],
           ]),

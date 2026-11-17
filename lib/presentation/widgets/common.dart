@@ -15,7 +15,7 @@ class AppDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget item(IconData icon, String label, String route) => ListTile(
-          leading: Icon(icon, color: AppColors.brown),
+          leading: Icon(icon, color: AppColors.ink),
           title: Text(label),
           selected: current == route,
           selectedColor: AppColors.orange,
@@ -35,7 +35,7 @@ class AppDrawer extends StatelessWidget {
         padding: EdgeInsets.zero,
         children: [
           Container(
-            color: AppColors.brown,
+            color: AppColors.tan,
             padding: EdgeInsets.fromLTRB(
                 20, MediaQuery.of(context).padding.top + 24, 20, 20),
             child: const Column(
@@ -50,11 +50,11 @@ class AppDrawer extends StatelessWidget {
                 SizedBox(height: 12),
                 Text('ParkMayab',
                     style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.ink,
                         fontSize: 22,
                         fontWeight: FontWeight.bold)),
                 Text('Universidad Anáhuac Mayab',
-                    style: TextStyle(color: Colors.white70)),
+                    style: TextStyle(color: AppColors.ink)),
               ],
             ),
           ),
@@ -95,9 +95,9 @@ class ReservationImage extends StatelessWidget {
         ? Container(
             width: width,
             height: height,
-            color: AppColors.brown.withValues(alpha: 0.12),
+            color: AppColors.ink.withValues(alpha: 0.12),
             child: const Icon(Icons.directions_car_filled,
-                color: AppColors.brown, size: 36),
+                color: AppColors.ink, size: 36),
           )
         : Image.file(
             AppPaths.photo(file),
@@ -193,6 +193,6 @@ void showSnack(BuildContext context, String message, {bool error = false}) {
     ..hideCurrentSnackBar()
     ..showSnackBar(SnackBar(
       content: Text(message),
-      backgroundColor: error ? AppColors.occupied : AppColors.brown,
+      backgroundColor: error ? AppColors.occupied : AppColors.ink,
     ));
 }

@@ -42,8 +42,8 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
           title: const Text('Disponibilidad'),
           bottom: TabBar(
             indicatorColor: AppColors.orange,
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white60,
+            labelColor: AppColors.ink,
+            unselectedLabelColor: Colors.black54,
             tabs: [
               for (var f = 1; f <= AppConstants.floors; f++) Tab(text: 'Piso $f'),
             ],
@@ -139,7 +139,7 @@ class _FloorGrid extends StatelessWidget {
             const SizedBox(height: 12),
             for (final wing in AppConstants.wings) ...[
               Text('Ala $wing',
-                  style: const TextStyle(color: AppColors.brown, fontSize: 16)),
+                  style: const TextStyle(color: AppColors.ink, fontSize: 16)),
               const SizedBox(height: 8),
               GridView.count(
                 crossAxisCount: 5,

@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 
-/// Paleta inspirada en los colores de la Universidad Anáhuac
-/// (naranja = sol, café = tierra). Los valores son aproximados.
+/// Paleta institucional de la Universidad Anáhuac:
+/// naranja #EC652B y arena #D6B7A0.
 class AppColors {
   AppColors._();
 
-  static const orange = Color(0xFFF47B20);
-  static const brown = Color(0xFF4E2E1B);
-  static const cream = Color(0xFFFFF6EE);
+  static const orange = Color(0xFFEC652B);
+  static const tan = Color(0xFFD6B7A0);
+  static const ink = Color(0xFF262626); // texto/íconos sobre arena
+  static const cream = Color(0xFFFBF5F0);
 
   static const free = Color(0xFF2E9E5B);
   static const occupied = Color(0xFFD64545);
@@ -18,7 +19,7 @@ ThemeData buildAppTheme() {
   final scheme = ColorScheme.fromSeed(
     seedColor: AppColors.orange,
     primary: AppColors.orange,
-    secondary: AppColors.brown,
+    secondary: AppColors.tan,
     surface: Colors.white,
   );
   return ThemeData(
@@ -26,8 +27,8 @@ ThemeData buildAppTheme() {
     colorScheme: scheme,
     scaffoldBackgroundColor: AppColors.cream,
     appBarTheme: const AppBarTheme(
-      backgroundColor: AppColors.brown,
-      foregroundColor: Colors.white,
+      backgroundColor: AppColors.tan,
+      foregroundColor: AppColors.ink,
       centerTitle: true,
     ),
     filledButtonTheme: FilledButtonThemeData(
@@ -40,9 +41,9 @@ ThemeData buildAppTheme() {
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.brown,
+        foregroundColor: AppColors.ink,
         minimumSize: const Size.fromHeight(48),
-        side: const BorderSide(color: AppColors.brown),
+        side: const BorderSide(color: AppColors.ink),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     ),
