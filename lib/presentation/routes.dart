@@ -8,7 +8,7 @@ import 'screens/scanner_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/shell_screen.dart';
 
-/// Rutas nombradas. La raíz ("/") contiene las pestañas
+/// Rutas nombradas. La raíz ("/") contiene las secciones del Drawer
 /// (Inicio, Lugares, Mi pase, Historial, Perfil); el resto se apilan
 /// encima con Navigator y la transición nativa de cada plataforma.
 class AppRoutes {

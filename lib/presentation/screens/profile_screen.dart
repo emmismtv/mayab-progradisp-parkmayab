@@ -128,11 +128,6 @@ class ProfileScreen extends StatelessWidget {
             label: 'Ajustes',
             onTap: () => Navigator.pushNamed(context, AppRoutes.settings),
           ),
-          _MenuTile(
-            icon: Icons.qr_code_scanner,
-            label: 'Escanear pluma',
-            onTap: () => Navigator.pushNamed(context, AppRoutes.scanner),
-          ),
           const SizedBox(height: 24),
           const Center(
             child: Text('Versión 1.0.0',

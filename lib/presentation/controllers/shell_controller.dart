@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-/// Índices de las pestañas de la barra inferior.
+/// Índices de las secciones principales (Drawer).
 class Tabs {
   Tabs._();
   static const home = 0;
@@ -10,7 +10,7 @@ class Tabs {
   static const profile = 4;
 }
 
-/// Estado de navegación de la barra inferior (solo UI, sin lógica de negocio).
+/// Estado de la sección activa del Drawer (solo UI, sin lógica de negocio).
 class ShellController extends ChangeNotifier {
   int index = Tabs.home;
   int floor = 1;

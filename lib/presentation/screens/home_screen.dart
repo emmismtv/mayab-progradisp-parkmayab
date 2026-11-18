@@ -66,12 +66,12 @@ class HomeScreen extends StatelessWidget {
                 style: AppText.slab(size: 17, color: AppColors.grey))),
             const SizedBox(height: 12),
             Pad(GridView.count(
-              crossAxisCount: 3,
+              crossAxisCount: 2,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               mainAxisSpacing: 12,
               crossAxisSpacing: 12,
-              childAspectRatio: 0.95,
+              childAspectRatio: 1.5,
               children: [
                 ActionTile(
                     icon: Icons.add_location_alt_outlined,
@@ -94,17 +94,6 @@ class HomeScreen extends StatelessWidget {
                     title: 'Historial',
                     subtitle: 'Visitas',
                     onTap: () => shell.go(Tabs.history)),
-                ActionTile(
-                    icon: Icons.badge_outlined,
-                    title: 'Mi perfil',
-                    subtitle: 'Anáhuac',
-                    onTap: () => shell.go(Tabs.profile)),
-                ActionTile(
-                    icon: Icons.tune,
-                    title: 'Ajustes',
-                    subtitle: 'App',
-                    onTap: () =>
-                        Navigator.pushNamed(context, AppRoutes.settings)),
               ],
             )),
           ],

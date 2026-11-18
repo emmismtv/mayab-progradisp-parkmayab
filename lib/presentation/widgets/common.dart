@@ -79,7 +79,7 @@ class BrandMark extends StatelessWidget {
   }
 }
 
-/// Drawer principal compartido por las pestañas.
+/// Drawer principal para navegar entre secciones.
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
 
