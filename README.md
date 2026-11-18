@@ -3,29 +3,45 @@
 App Flutter para apartar lugar en el estacionamiento de la Universidad Anáhuac Mayab.
 Proyecto del Parcial 2 de Programación de Dispositivos Móviles.
 
-## Flujo
-1. Inicio: mapa con el radio de 2 km del campus y tu distancia por GPS.
-2. Dentro del radio se habilita "Apartar lugar" (modo demostración en Ajustes para saltarlo).
-3. Disponibilidad por piso (libre / ocupado / apartado) y formulario con foto (cámara o galería),
-   nota dictada por voz y captura del GPS.
-4. Al llegar, se escanea el QR de la pluma (el QR de la demo está en Ajustes).
-5. Guía al piso, ala y cajón. Historial y detalle con mapa y botón a Google Maps.
+## Funcionalidades
+- **Geocerca de 2 km:** solo se puede apartar estando cerca del campus (GPS con `geolocator`).
+- **Disponibilidad por piso:** plano del edificio (3 pisos, alas A y B) con cajones libres, ocupados y apartados.
+- **Nueva reserva:** foto del vehículo (cámara o galería), nota dictada por voz y captura de coordenadas GPS.
+- **Pluma con QR:** al llegar se escanea el QR de la entrada para registrar el acceso.
+- **Mi pase:** cajón asignado, cuenta regresiva de 15 minutos y guía paso a paso.
+- **Historial y detalle:** visitas guardadas en SQLite, transición Hero y mapa de Google Maps.
+- **Perfil:** datos del alumno y foto de perfil.
 
 ## Arquitectura por capas
-- `lib/domain`: entidades, contratos (repositorios y servicios) y casos de uso.
-- `lib/data`: SQLite (sqflite) y SharedPreferences que implementan los contratos.
-- `lib/services`: GPS (geolocator), cámara/galería (image_picker), dictado (speech_to_text).
-- `lib/presentation`: controlador (Provider), rutas y pantallas.
-- `lib/main.dart`: composición de dependencias.
+| Capa | Carpeta | Contenido |
+|---|---|---|
+| Presentación | `lib/presentation` | Pantallas, rutas, Drawer y controladores (Provider) |
+| Dominio | `lib/domain` | Entidades, contratos y casos de uso (Dart puro) |
+| Datos | `lib/data` | SQLite (`sqflite`) y SharedPreferences |
+| Servicios | `lib/services` | GPS, cámara/galería y dictado por voz |
+| Núcleo | `lib/core` | Constantes, tema, rutas de archivos y errores |
 
-## Notas
-- La ocupación de cajones es simulada (no hay sensores ni servidor); los datos viven en SQLite local.
-- La pluma es simulada: el QR contiene `PARKMAYAB|ENTRADA-1`.
-- Las coordenadas del campus son aproximadas; se pueden calibrar en Ajustes.
-- Se necesita un iPhone real para cámara, GPS y dictado.
+Las dependencias se componen en `lib/main.dart`.
 
-## Ejecutar
+## Configuración
+1. Copia `ios/Flutter/Secrets.xcconfig.example` a `ios/Flutter/Secrets.xcconfig` y escribe tu llave de Google Maps (Maps SDK for iOS).
+2. Instala dependencias y ejecuta:
+
 ```bash
 flutter pub get
 flutter run
 ```
+
+## Notas
+- La ocupación de los cajones es simulada (no hay sensores ni servidor).
+- La pluma es virtual: su QR contiene `PARKMAYAB|ENTRADA-1` y se muestra en **Ajustes** para la demostración.
+- Las coordenadas del campus son aproximadas; se pueden calibrar en **Ajustes**.
+- **Modo demostración** (Ajustes) permite apartar fuera del radio de 2 km.
+
+## Pruebas
+```bash
+flutter test
+```
+
+## Reporte técnico
+`docs/Reporte_Tecnico_ParkMayab.docx`

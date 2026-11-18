@@ -46,3 +46,6 @@ app.*.map.json
 
 # Llave de Google Maps (no se sube al repositorio)
 ios/Flutter/Secrets.xcconfig
+
+# Docs
+/docs/
