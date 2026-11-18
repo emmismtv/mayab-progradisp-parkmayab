@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 
 import 'core/app_paths.dart';
@@ -8,12 +9,14 @@ import 'data/repositories/sqlite_repositories.dart';
 import 'domain/repositories/services.dart';
 import 'domain/usecases/usecases.dart';
 import 'presentation/controllers/parking_controller.dart';
+import 'presentation/controllers/shell_controller.dart';
 import 'presentation/routes.dart';
 import 'services/device_services.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppPaths.init();
+  await initializeDateFormatting('es');
 
   // Composición de dependencias (raíz de la aplicación).
   final db = AppDatabase.instance;
@@ -25,6 +28,7 @@ Future<void> main() async {
 
   final controller = ParkingController(
     settingsRepo: PrefsSettingsRepository(),
+    profileRepo: PrefsProfileRepository(),
     slotRepo: slotRepo,
     reservationRepo: reservationRepo,
     location: location,
@@ -38,6 +42,7 @@ Future<void> main() async {
   runApp(MultiProvider(
     providers: [
       ChangeNotifierProvider.value(value: controller),
+      ChangeNotifierProvider(create: (_) => ShellController()),
       Provider<MediaService>(create: (_) => ImagePickerMediaService()),
       Provider<SpeechService>(create: (_) => SttSpeechService()),
     ],

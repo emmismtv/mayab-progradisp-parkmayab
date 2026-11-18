@@ -7,6 +7,7 @@ import '../../domain/entities/app_settings.dart';
 import '../../domain/entities/geo_point.dart';
 import '../../domain/entities/parking_slot.dart';
 import '../../domain/entities/reservation.dart';
+import '../../domain/entities/user_profile.dart';
 import '../../domain/repositories/repositories.dart';
 import '../app_database.dart';
 
@@ -196,6 +197,43 @@ class PrefsSettingsRepository implements SettingsRepository {
       await prefs.setDouble(_kLng, s.campus.lng);
     } catch (_) {
       throw const AppException('No se pudieron guardar los ajustes.');
+    }
+  }
+}
+
+/// Perfil del alumno en SharedPreferences.
+class PrefsProfileRepository implements ProfileRepository {
+  static const _kName = 'profile_name';
+  static const _kId = 'profile_id';
+  static const _kEmail = 'profile_email';
+  static const _kPhoto = 'profile_photo';
+
+  @override
+  Future<UserProfile> load() async {
+    final d = UserProfile.defaults();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return UserProfile(
+        name: prefs.getString(_kName) ?? d.name,
+        studentId: prefs.getString(_kId) ?? d.studentId,
+        email: prefs.getString(_kEmail) ?? d.email,
+        photoFile: prefs.getString(_kPhoto),
+      );
+    } catch (_) {
+      return d;
+    }
+  }
+
+  @override
+  Future<void> save(UserProfile p) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_kName, p.name);
+      await prefs.setString(_kId, p.studentId);
+      await prefs.setString(_kEmail, p.email);
+      if (p.photoFile != null) await prefs.setString(_kPhoto, p.photoFile!);
+    } catch (_) {
+      throw const AppException('No se pudo guardar tu perfil.');
     }
   }
 }

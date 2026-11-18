@@ -1,6 +1,7 @@
 import '../entities/app_settings.dart';
 import '../entities/parking_slot.dart';
 import '../entities/reservation.dart';
+import '../entities/user_profile.dart';
 
 /// Contratos de persistencia. La capa de dominio solo conoce estas
 /// interfaces (Inversión de dependencias); SQLite vive en la capa data.
@@ -24,4 +25,9 @@ abstract class ReservationRepository {
 abstract class SettingsRepository {
   Future<AppSettings> load();
   Future<void> save(AppSettings settings);
+}
+
+abstract class ProfileRepository {
+  Future<UserProfile> load();
+  Future<void> save(UserProfile profile);
 }

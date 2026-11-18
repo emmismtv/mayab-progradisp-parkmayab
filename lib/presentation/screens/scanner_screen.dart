@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/errors.dart';
 import '../../core/theme.dart';
 import '../controllers/parking_controller.dart';
-import '../routes.dart';
+import '../controllers/shell_controller.dart';
 import '../widgets/common.dart';
 
-/// Escáner de QR de la pluma. Al validar, "abre" la pluma y lleva a la guía.
+/// Escáner de QR de la pluma. Al validar, "abre" la pluma y lleva al pase.
 class ScannerScreen extends StatefulWidget {
   const ScannerScreen({super.key});
 
@@ -31,32 +32,36 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
   Future<void> _onDetect(BarcodeCapture capture) async {
     if (_busy) return;
-    final raw = capture.barcodes.isEmpty ? null : capture.barcodes.first.rawValue;
+    final raw =
+        capture.barcodes.isEmpty ? null : capture.barcodes.first.rawValue;
     if (raw == null) return;
     _busy = true;
 
     final controller = context.read<ParkingController>();
     try {
       await controller.validateQr(raw);
+      HapticFeedback.heavyImpact();
       if (!mounted) return;
-      await showDialog<void>(
+      await showAdaptiveDialog<void>(
         context: context,
-        barrierDismissible: false,
-        builder: (_) => AlertDialog(
+        builder: (dialogContext) => AlertDialog.adaptive(
           icon: const Icon(Icons.check_circle, color: AppColors.free, size: 56),
           title: const Text('¡Pluma abierta!'),
-          content: const Text('Bienvenido a la Anáhuac Mayab. Te llevamos a tu cajón.'),
+          content: const Text(
+              'Bienvenido a la Anáhuac Mayab. Te llevamos a tu cajón.'),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Ver guía')),
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Ver mi pase'),
+            ),
           ],
         ),
       );
-      if (mounted) Navigator.pushReplacementNamed(context, AppRoutes.guide);
+      if (mounted) goToTab(context, Tabs.pass);
     } on AppException catch (e) {
+      HapticFeedback.vibrate();
       if (mounted) showSnack(context, e.message, error: true);
-      // Pequeña pausa para no repetir el mensaje en bucle.
+      // Pausa para no repetir el mensaje en bucle.
       await Future<void>.delayed(const Duration(seconds: 2));
       _busy = false;
     } catch (_) {
@@ -68,45 +73,75 @@ class _ScannerScreenState extends State<ScannerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Escanear QR de la pluma')),
+      backgroundColor: Colors.black,
+      appBar: brandAppBar(
+        context,
+        title: 'Escanear pluma',
+        dark: true,
+        actions: [
+          IconButton(
+            tooltip: 'Linterna',
+            onPressed: _camera.toggleTorch,
+            icon: const Icon(Icons.flashlight_on_outlined),
+          ),
+        ],
+      ),
       body: Stack(
         children: [
           MobileScanner(
             controller: _camera,
             onDetect: _onDetect,
-            errorBuilder: (context, error) => Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  'No se pudo abrir la cámara. Revisa el permiso en Ajustes del iPhone.\n(${error.errorCode.name})',
-                  textAlign: TextAlign.center,
+            errorBuilder: (context, error) => EmptyState(
+              icon: Icons.no_photography_outlined,
+              title: 'Cámara no disponible',
+              message:
+                  'Revisa el permiso de cámara en Ajustes del iPhone.\n(${error.errorCode.name})',
+            ),
+          ),
+          // Oscurece alrededor del recuadro de lectura.
+          ColorFiltered(
+            colorFilter: ColorFilter.mode(
+                Colors.black.withValues(alpha: 0.55), BlendMode.srcOut),
+            child: Stack(children: [
+              Container(
+                  decoration: const BoxDecoration(
+                      color: Colors.black,
+                      backgroundBlendMode: BlendMode.dstOut)),
+              Center(
+                child: Container(
+                  width: 260,
+                  height: 260,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
                 ),
               ),
-            ),
+            ]),
           ),
           Center(
             child: Container(
-              width: 250,
-              height: 250,
+              width: 260,
+              height: 260,
               decoration: BoxDecoration(
                 border: Border.all(color: AppColors.orange, width: 4),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(24),
               ),
             ),
           ),
-          const Positioned(
-            left: 0,
-            right: 0,
-            bottom: 40,
-            child: Text(
-              'Apunta al código QR de la pluma',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  shadows: [Shadow(blurRadius: 6)]),
-            ),
+          Positioned(
+            left: 24,
+            right: 24,
+            bottom: 48,
+            child: Column(children: [
+              Text('Apunta al código QR de la pluma',
+                  textAlign: TextAlign.center,
+                  style: AppText.slab(size: 17, color: Colors.white)),
+              const SizedBox(height: 6),
+              const Text('Lo encontrarás en la Entrada 1 del estacionamiento.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white70)),
+            ]),
           ),
         ],
       ),

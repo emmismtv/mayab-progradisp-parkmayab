@@ -1,201 +1,274 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/constants.dart';
 import '../../core/theme.dart';
 import '../../domain/entities/parking_slot.dart';
 import '../controllers/parking_controller.dart';
+import '../controllers/shell_controller.dart';
 import '../routes.dart';
 import '../widgets/common.dart';
 
-/// Cuadrícula de cajones por piso (verde libre, rojo ocupado, amarillo apartado).
-class AvailabilityScreen extends StatefulWidget {
+/// Plano del piso: alas A y B a los lados del carril central.
+class AvailabilityScreen extends StatelessWidget {
   const AvailabilityScreen({super.key});
-
-  @override
-  State<AvailabilityScreen> createState() => _AvailabilityScreenState();
-}
-
-class _AvailabilityScreenState extends State<AvailabilityScreen> {
-  late Map<int, Future<List<ParkingSlot>>> _futures;
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  void _load() {
-    final c = context.read<ParkingController>();
-    _futures = {
-      for (var f = 1; f <= AppConstants.floors; f++) f: c.slotsOfFloor(f),
-    };
-  }
 
   @override
   Widget build(BuildContext context) {
     final c = context.watch<ParkingController>();
-    return DefaultTabController(
-      length: AppConstants.floors,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Disponibilidad'),
-          bottom: TabBar(
-            indicatorColor: AppColors.orange,
-            labelColor: AppColors.ink,
-            unselectedLabelColor: Colors.black54,
-            tabs: [
-              for (var f = 1; f <= AppConstants.floors; f++) Tab(text: 'Piso $f'),
-            ],
-          ),
-        ),
-        drawer: const AppDrawer(current: AppRoutes.availability),
-        body: Column(
-          children: [
-            const _Legend(),
-            if (c.current != null)
-              Container(
-                width: double.infinity,
-                color: AppColors.reserved.withValues(alpha: 0.25),
-                padding: const EdgeInsets.all(10),
-                child: Text(
-                    'Ya tienes el cajón ${c.current!.slotCode}. Termina esa visita para apartar otro.',
-                    textAlign: TextAlign.center),
-              ),
-            Expanded(
-              child: TabBarView(
-                children: [
+    final shell = context.watch<ShellController>();
+
+    return Scaffold(
+      appBar: brandAppBar(context, title: 'Lugares'),
+      drawer: const AppDrawer(),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: SizedBox(
+              width: double.infinity,
+              child: CupertinoSlidingSegmentedControl<int>(
+                groupValue: shell.floor,
+                thumbColor: AppColors.orange,
+                backgroundColor: AppColors.surface,
+                onValueChanged: (v) {
+                  if (v == null) return;
+                  HapticFeedback.selectionClick();
+                  shell.selectFloor(v);
+                },
+                children: {
                   for (var f = 1; f <= AppConstants.floors; f++)
-                    _FloorGrid(
-                      future: _futures[f]!,
-                      enabled: c.current == null,
-                      onReturn: () => setState(_load),
+                    f: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Text('Piso $f',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: shell.floor == f
+                                  ? Colors.white
+                                  : AppColors.ink)),
                     ),
-                ],
+                },
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Legend extends StatelessWidget {
-  const _Legend();
-
-  @override
-  Widget build(BuildContext context) {
-    Widget dot(Color color, String label) => Row(children: [
-          Container(
-              width: 14,
-              height: 14,
-              decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-          const SizedBox(width: 6),
-          Text(label),
-        ]);
-    return Padding(
-      padding: const EdgeInsets.all(12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          dot(AppColors.free, 'Libre'),
-          dot(AppColors.occupied, 'Ocupado'),
-          dot(AppColors.reserved, 'Apartado'),
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _LegendDot(AppColors.free, 'Libre'),
+                _LegendDot(AppColors.occupied, 'Ocupado'),
+                _LegendDot(AppColors.reserved, 'Apartado'),
+              ],
+            ),
+          ),
+          if (c.current != null)
+            Container(
+              margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.reserved.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(children: [
+                const Icon(Icons.info_outline, color: AppColors.reserved),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                      'Ya tienes el cajón ${c.current!.slotCode}. Termina esa visita para apartar otro.'),
+                ),
+              ]),
+            ),
+          Expanded(
+            child: FutureBuilder<List<ParkingSlot>>(
+              future: c.slotsOfFloor(shell.floor),
+              builder: (context, snap) {
+                if (snap.hasError) {
+                  return Center(child: Text('${snap.error}'));
+                }
+                if (!snap.hasData) {
+                  return const Center(
+                      child: CircularProgressIndicator.adaptive());
+                }
+                return RefreshIndicator.adaptive(
+                  onRefresh: c.refreshReservation,
+                  child: _FloorPlan(
+                    slots: snap.data!,
+                    enabled: c.current == null && c.canReserve,
+                    canReserve: c.canReserve,
+                  ),
+                );
+              },
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-class _FloorGrid extends StatelessWidget {
-  const _FloorGrid({
-    required this.future,
+class _LegendDot extends StatelessWidget {
+  const _LegendDot(this.color, this.label);
+  final Color color;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Row(children: [
+        Container(
+            width: 12,
+            height: 12,
+            decoration: BoxDecoration(
+                color: color, borderRadius: BorderRadius.circular(3))),
+        const SizedBox(width: 6),
+        Text(label, style: const TextStyle(fontSize: 13)),
+      ]);
+}
+
+class _FloorPlan extends StatelessWidget {
+  const _FloorPlan({
+    required this.slots,
     required this.enabled,
-    required this.onReturn,
+    required this.canReserve,
   });
-  final Future<List<ParkingSlot>> future;
+  final List<ParkingSlot> slots;
   final bool enabled;
-  final VoidCallback onReturn;
+  final bool canReserve;
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<ParkingSlot>>(
-      future: future,
-      builder: (context, snap) {
-        if (snap.connectionState != ConnectionState.done) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snap.hasError) {
-          return Center(child: Text('${snap.error}'));
-        }
-        final slots = snap.data!;
-        final free = slots.where((s) => s.status == SlotStatus.free).length;
-        return ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            Text('$free de ${slots.length} lugares libres',
-                style: const TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-            for (final wing in AppConstants.wings) ...[
-              Text('Ala $wing',
-                  style: const TextStyle(color: AppColors.ink, fontSize: 16)),
-              const SizedBox(height: 8),
-              GridView.count(
-                crossAxisCount: 5,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 8,
-                children: [
-                  for (final s in slots.where((s) => s.wing == wing))
-                    _SlotTile(
-                        slot: s, enabled: enabled, onReturn: onReturn),
-                ],
-              ),
-              const SizedBox(height: 16),
+    final free = slots.where((s) => s.status == SlotStatus.free).length;
+    final wings = AppConstants.wings;
+
+    Widget wing(String w) => Column(children: [
+          Text('Ala $w', style: AppText.slab(size: 15)),
+          const SizedBox(height: 8),
+          for (final s in slots.where((s) => s.wing == w))
+            _SlotTile(slot: s, enabled: enabled),
+        ]);
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+      children: [
+        Row(children: [
+          Text('$free', style: AppText.slab(size: 26, color: AppColors.free)),
+          const SizedBox(width: 6),
+          Text('de ${slots.length} lugares libres',
+              style: const TextStyle(color: AppColors.grey, fontSize: 15)),
+        ]),
+        if (!canReserve)
+          const Padding(
+            padding: EdgeInsets.only(top: 4),
+            child: Text('Acércate a menos de 2 km del campus para apartar.',
+                style: TextStyle(color: AppColors.occupied)),
+          ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: wing(wings.first)),
+              const _Lane(),
+              Expanded(child: wing(wings.last)),
             ],
-          ],
-        );
-      },
+          ),
+        ),
+        const SizedBox(height: 12),
+        const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Icon(Icons.login, color: AppColors.grey, size: 18),
+          SizedBox(width: 6),
+          Text('Entrada y rampa', style: TextStyle(color: AppColors.grey)),
+        ]),
+      ],
+    );
+  }
+}
+
+/// Carril central con flechas de circulación.
+class _Lane extends StatelessWidget {
+  const _Lane();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 44,
+      child: Column(children: [
+        const SizedBox(height: 30),
+        for (var i = 0; i < 10; i++)
+          SizedBox(
+            height: 58,
+            child: Center(
+              child: i.isEven
+                  ? Container(width: 3, height: 26, color: AppColors.tan)
+                  : const Icon(Icons.keyboard_double_arrow_up,
+                      color: AppColors.tan),
+            ),
+          ),
+      ]),
     );
   }
 }
 
 class _SlotTile extends StatelessWidget {
-  const _SlotTile({
-    required this.slot,
-    required this.enabled,
-    required this.onReturn,
-  });
+  const _SlotTile({required this.slot, required this.enabled});
   final ParkingSlot slot;
   final bool enabled;
-  final VoidCallback onReturn;
 
   @override
   Widget build(BuildContext context) {
-    final color = switch (slot.status) {
-      SlotStatus.free => AppColors.free,
-      SlotStatus.occupied => AppColors.occupied,
-      SlotStatus.reserved => AppColors.reserved,
+    final (Color color, Color bg, IconData? icon) = switch (slot.status) {
+      SlotStatus.free => (AppColors.free, Colors.white, null),
+      SlotStatus.occupied => (
+          AppColors.occupied,
+          AppColors.occupied.withValues(alpha: 0.12),
+          Icons.directions_car_filled
+        ),
+      SlotStatus.reserved => (
+          AppColors.reserved,
+          AppColors.reserved.withValues(alpha: 0.15),
+          Icons.bookmark
+        ),
     };
     final tappable = enabled && slot.status == SlotStatus.free;
-    return Material(
-      color: color,
-      borderRadius: BorderRadius.circular(10),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(10),
-        onTap: tappable
-            ? () async {
-                await Navigator.pushNamed(context, AppRoutes.reserve,
-                    arguments: slot);
-                onReturn();
-              }
-            : null,
-        child: Center(
-          child: Text(slot.code,
-              style: const TextStyle(
-                  color: Colors.white, fontWeight: FontWeight.bold)),
+
+    return Container(
+      height: 50,
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: Material(
+        color: bg,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+          side: BorderSide(color: color, width: 1.5),
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: tappable
+              ? () {
+                  HapticFeedback.lightImpact();
+                  Navigator.pushNamed(context, AppRoutes.reserve,
+                      arguments: slot);
+                }
+              : null,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (icon != null) ...[
+                Icon(icon, color: color, size: 18),
+                const SizedBox(width: 6),
+              ],
+              Text(slot.code,
+                  style: TextStyle(
+                      color: color,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 15)),
+            ],
+          ),
         ),
       ),
     );
